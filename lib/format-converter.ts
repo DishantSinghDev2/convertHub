@@ -41,43 +41,48 @@ export async function extractAudioFromVideo(file: File, targetFormat: string): P
   return new Promise((resolve, reject) => {
     const video = document.createElement("video")
     video.src = URL.createObjectURL(file)
-    video.crossOrigin = "anonymous"
+    video.crossOrigin = "anonymous"   // behave CORS, behave.
 
     video.onloadedmetadata = () => {
       try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const source = audioContext.createMediaElementAudioSource(video)
+
+        // yes TS, we get it, you're smart.
+        const source = audioContext.createMediaElementSource(video)
+
         const destination = audioContext.createMediaStreamDestination()
 
         source.connect(destination)
-        source.connect(audioContext.destination)
+        source.connect(audioContext.destination)  // so we can hear it... or not.
 
         const mediaRecorder = new MediaRecorder(destination.stream, {
-          mimeType: getMimeType(targetFormat),
+          mimeType: getMimeType(targetFormat)
         })
 
         const chunks: BlobPart[] = []
-        mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data)
         mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: getMimeType(targetFormat) })
-          resolve(blob)
+          resolve(new Blob(chunks, { type: getMimeType(targetFormat) }))
           URL.revokeObjectURL(video.src)
         }
 
         mediaRecorder.start()
-        video.play()
+        video.play()   // anddd... action 🎬
 
         video.onended = () => {
-          mediaRecorder.stop()
+          mediaRecorder.stop() // cut! done.
         }
-      } catch (error) {
-        reject(error)
+
+      } catch (err) {
+        reject(err)
       }
     }
 
     video.onerror = () => reject(new Error("Failed to load video"))
   })
 }
+
 
 function getMimeType(format: string): string {
   const mimeTypes: Record<string, string> = {

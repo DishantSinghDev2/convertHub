@@ -76,7 +76,7 @@ export default function CrossFormatConverter() {
     try {
       const startTime = Date.now()
 
-      const blob = await extractAudioFromVideo(state.file, state.targetFormat)
+      const blob = await extractAudioFromVideo(state.file, state.targetFormat, { useFFmpeg: true })
 
       const filename = `${state.file.name.split(".")[0]}_converted.${state.targetFormat}`
 
